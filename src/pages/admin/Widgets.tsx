@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Plus, Trash2, Edit, Clock, Cloud, Sun, Newspaper, Image, Video, Play } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Plus, Trash2, Edit, Clock, Cloud, Sun, Newspaper, Image, Video, Play, GripVertical } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useDisplayStore } from '@/store/displayStore';
-import { WidgetType } from '@/types/widget';
+import { WidgetType, Widget } from '@/types/widget';
+import { WidgetEditor } from '@/components/admin/WidgetEditor';
+import { useSampleImages, useSampleVideos } from '@/hooks/useApiData';
 
 const availableWidgets: { type: WidgetType; label: string; icon: React.ElementType; description: string }[] = [
   { type: 'clock', label: 'ساعت', icon: Clock, description: 'نمایش ساعت و تاریخ شمسی' },
@@ -18,7 +20,9 @@ const availableWidgets: { type: WidgetType; label: string; icon: React.ElementTy
 
 export default function WidgetsPage() {
   const { activePage, addWidget, removeWidget } = useDisplayStore();
-  const [selectedType, setSelectedType] = useState<WidgetType | null>(null);
+  const [editingWidget, setEditingWidget] = useState<Widget | null>(null);
+  const { images: sampleImages } = useSampleImages(5);
+  const { videos: sampleVideos } = useSampleVideos();
 
   const handleAddWidget = (type: WidgetType) => {
     if (!activePage) return;
@@ -41,8 +45,18 @@ export default function WidgetsPage() {
         newWidget.items = [];
         newWidget.speed = 50;
         break;
+      case 'image':
+        newWidget.src = sampleImages[0] || 'https://picsum.photos/800/600';
+        newWidget.aspectRatio = '3:4';
+        break;
+      case 'video':
+        newWidget.src = sampleVideos[0]?.url || '';
+        newWidget.autoplay = true;
+        newWidget.loop = true;
+        newWidget.muted = true;
+        break;
       case 'slideshow':
-        newWidget.images = [];
+        newWidget.images = sampleImages.slice(0, 3);
         newWidget.interval = 5;
         break;
     }
@@ -108,30 +122,44 @@ export default function WidgetsPage() {
               if (!widgetInfo) return null;
 
               return (
-                <Card key={widget.id} className="widget-card">
-                  <CardContent className="p-4 flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                      <widgetInfo.icon className="w-6 h-6 text-primary" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-bold text-foreground">{widgetInfo.label}</h3>
-                      <p className="text-sm text-muted-foreground">ID: {widget.id}</p>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button size="icon" variant="ghost">
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="text-destructive"
-                        onClick={() => removeWidget(activePage.id, widget.id)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                <motion.div
+                  key={widget.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                >
+                  <Card className="widget-card group">
+                    <CardContent className="p-4 flex items-center gap-4">
+                      <div className="cursor-grab opacity-50 group-hover:opacity-100 transition-opacity">
+                        <GripVertical className="w-5 h-5 text-muted-foreground" />
+                      </div>
+                      <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                        <widgetInfo.icon className="w-6 h-6 text-primary" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-bold text-foreground">{widgetInfo.label}</h3>
+                        <p className="text-sm text-muted-foreground">ID: {widget.id}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button 
+                          size="icon" 
+                          variant="ghost"
+                          onClick={() => setEditingWidget(widget)}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="text-destructive"
+                          onClick={() => removeWidget(activePage.id, widget.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
               );
             })}
           </div>
@@ -143,6 +171,17 @@ export default function WidgetsPage() {
           </Card>
         )}
       </motion.div>
+
+      {/* Widget Editor Modal */}
+      <AnimatePresence>
+        {editingWidget && activePage && (
+          <WidgetEditor
+            widget={editingWidget}
+            pageId={activePage.id}
+            onClose={() => setEditingWidget(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

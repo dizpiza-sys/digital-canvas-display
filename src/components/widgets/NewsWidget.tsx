@@ -1,6 +1,7 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useDisplayStore } from '@/store/displayStore';
+import { useNewsData } from '@/hooks/useApiData';
 
 interface NewsWidgetProps {
   speed?: number;
@@ -8,9 +9,27 @@ interface NewsWidgetProps {
 
 export function NewsWidget({ speed = 50 }: NewsWidgetProps) {
   const { newsItems } = useDisplayStore();
+  const { news: apiNews, loading } = useNewsData();
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const newsText = newsItems.map(item => item.title).join('  •  ');
+  // Combine store news with API news
+  const allNews = newsItems.length > 0 
+    ? newsItems 
+    : apiNews.map(n => ({ id: n.id, title: n.title }));
+
+  const newsText = allNews.map(item => item.title).join('  •  ');
+
+  if (loading && newsItems.length === 0) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="h-full w-full flex items-center justify-center bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10"
+      >
+        <span className="text-muted-foreground">در حال بارگذاری اخبار...</span>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div
@@ -26,7 +45,7 @@ export function NewsWidget({ speed = 50 }: NewsWidgetProps) {
           }}
           transition={{
             x: {
-              duration: newsItems.length * (100 / speed) * 5,
+              duration: allNews.length * (100 / speed) * 5,
               repeat: Infinity,
               ease: 'linear',
             },
