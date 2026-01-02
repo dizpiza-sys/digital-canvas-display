@@ -34,7 +34,7 @@ export default function Index() {
               مشاهده صفحه نمایش
             </Button>
           </Link>
-          <Link to="/admin">
+          <Link to="/login">
             <Button size="lg" variant="outline" className="w-full sm:w-auto gap-2">
               <Settings className="w-5 h-5" />
               ورود به پنل مدیریت
