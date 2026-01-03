@@ -5,3 +5,5 @@ export { NewsWidget } from './NewsWidget';
 export { ImageWidget } from './ImageWidget';
 export { VideoWidget } from './VideoWidget';
 export { SlideshowWidget } from './SlideshowWidget';
+export { TextWidget } from './TextWidget';
+export { HtmlWidget } from './HtmlWidget';

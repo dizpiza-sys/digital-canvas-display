@@ -24,6 +24,8 @@ import { WidgetEditor } from '@/components/admin/WidgetEditor';
 import { SortableWidgetItem } from '@/components/admin/SortableWidgetItem';
 import { useSampleImages, useSampleVideos } from '@/hooks/useApiData';
 
+import { Type, Code } from 'lucide-react';
+
 const availableWidgets: { type: WidgetType; label: string; icon: React.ElementType; description: string }[] = [
   { type: 'clock', label: 'ساعت', icon: Clock, description: 'نمایش ساعت و تاریخ شمسی' },
   { type: 'weather', label: 'آب‌وهوا', icon: Cloud, description: 'نمایش وضعیت آب‌وهوا' },
@@ -32,6 +34,8 @@ const availableWidgets: { type: WidgetType; label: string; icon: React.ElementTy
   { type: 'image', label: 'تصویر', icon: Image, description: 'نمایش تصویر با نسبت‌های مختلف' },
   { type: 'video', label: 'ویدئو', icon: Video, description: 'پخش ویدئو با نسبت ۱۶:۹' },
   { type: 'slideshow', label: 'اسلایدشو', icon: Play, description: 'نمایش خودکار تصاویر' },
+  { type: 'text', label: 'متن', icon: Type, description: 'متن با قابلیت فرمت‌دهی پیشرفته' },
+  { type: 'html', label: 'HTML', icon: Code, description: 'محتوای HTML سفارشی' },
 ];
 
 export default function WidgetsPage() {
@@ -85,6 +89,14 @@ export default function WidgetsPage() {
       case 'slideshow':
         newWidget.images = sampleImages.slice(0, 3);
         newWidget.interval = 5;
+        break;
+      case 'text':
+        newWidget.content = '<p>متن نمونه</p>';
+        newWidget.fontSize = 16;
+        newWidget.textAlign = 'right';
+        break;
+      case 'html':
+        newWidget.htmlContent = '<div style="padding: 1rem;">محتوای HTML</div>';
         break;
     }
 
