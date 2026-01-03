@@ -1,11 +1,27 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2, Edit, Clock, Cloud, Sun, Newspaper, Image, Video, Play, GripVertical } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { Plus, Clock, Cloud, Sun, Newspaper, Image, Video, Play } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useDisplayStore } from '@/store/displayStore';
 import { WidgetType, Widget } from '@/types/widget';
 import { WidgetEditor } from '@/components/admin/WidgetEditor';
+import { SortableWidgetItem } from '@/components/admin/SortableWidgetItem';
 import { useSampleImages, useSampleVideos } from '@/hooks/useApiData';
 
 const availableWidgets: { type: WidgetType; label: string; icon: React.ElementType; description: string }[] = [
@@ -19,10 +35,21 @@ const availableWidgets: { type: WidgetType; label: string; icon: React.ElementTy
 ];
 
 export default function WidgetsPage() {
-  const { activePage, addWidget, removeWidget } = useDisplayStore();
+  const { activePage, addWidget, removeWidget, reorderWidgets } = useDisplayStore();
   const [editingWidget, setEditingWidget] = useState<Widget | null>(null);
   const { images: sampleImages } = useSampleImages(5);
   const { videos: sampleVideos } = useSampleVideos();
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   const handleAddWidget = (type: WidgetType) => {
     if (!activePage) return;
@@ -64,6 +91,17 @@ export default function WidgetsPage() {
     addWidget(activePage.id, newWidget);
   };
 
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id && activePage) {
+      const oldIndex = activePage.widgets.findIndex((w) => w.id === active.id);
+      const newIndex = activePage.widgets.findIndex((w) => w.id === over.id);
+      const newWidgets = arrayMove(activePage.widgets, oldIndex, newIndex);
+      reorderWidgets(activePage.id, newWidgets);
+    }
+  };
+
   return (
     <div className="p-6 lg:p-8">
       <motion.div
@@ -73,7 +111,7 @@ export default function WidgetsPage() {
       >
         <h1 className="text-3xl font-bold text-foreground mb-2">مدیریت ویجت‌ها</h1>
         <p className="text-muted-foreground">
-          ویجت‌های مورد نظر را به صفحه نمایش اضافه کنید
+          ویجت‌های مورد نظر را به صفحه نمایش اضافه کنید و با درگ و دراپ مرتب کنید
         </p>
       </motion.div>
 
@@ -108,7 +146,7 @@ export default function WidgetsPage() {
         </div>
       </motion.div>
 
-      {/* Active Widgets */}
+      {/* Active Widgets with Drag & Drop */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -116,53 +154,33 @@ export default function WidgetsPage() {
       >
         <h2 className="text-xl font-bold text-foreground mb-4">ویجت‌های فعال</h2>
         {activePage?.widgets.length ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {activePage.widgets.map((widget, index) => {
-              const widgetInfo = availableWidgets.find(w => w.type === widget.type);
-              if (!widgetInfo) return null;
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={activePage.widgets.map((w) => w.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {activePage.widgets.map((widget) => {
+                  const widgetInfo = availableWidgets.find((w) => w.type === widget.type);
+                  if (!widgetInfo) return null;
 
-              return (
-                <motion.div
-                  key={widget.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                >
-                  <Card className="widget-card group">
-                    <CardContent className="p-4 flex items-center gap-4">
-                      <div className="cursor-grab opacity-50 group-hover:opacity-100 transition-opacity">
-                        <GripVertical className="w-5 h-5 text-muted-foreground" />
-                      </div>
-                      <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                        <widgetInfo.icon className="w-6 h-6 text-primary" />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-bold text-foreground">{widgetInfo.label}</h3>
-                        <p className="text-sm text-muted-foreground">ID: {widget.id}</p>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button 
-                          size="icon" 
-                          variant="ghost"
-                          onClick={() => setEditingWidget(widget)}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="text-destructive"
-                          onClick={() => removeWidget(activePage.id, widget.id)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              );
-            })}
-          </div>
+                  return (
+                    <SortableWidgetItem
+                      key={widget.id}
+                      widget={widget}
+                      widgetInfo={widgetInfo}
+                      onEdit={() => setEditingWidget(widget)}
+                      onRemove={() => removeWidget(activePage.id, widget.id)}
+                    />
+                  );
+                })}
+              </div>
+            </SortableContext>
+          </DndContext>
         ) : (
           <Card className="widget-card">
             <CardContent className="p-12 text-center">
