@@ -16,8 +16,11 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
+import { PenTool } from 'lucide-react';
+
 const sidebarLinks = [
   { path: '/admin', icon: LayoutDashboard, label: 'داشبورد' },
+  { path: '/admin/editor', icon: PenTool, label: 'ویرایشگر صفحه' },
   { path: '/admin/widgets', icon: Monitor, label: 'ویجت‌ها' },
   { path: '/admin/news', icon: Newspaper, label: 'اخبار' },
   { path: '/admin/media', icon: Image, label: 'رسانه‌ها' },

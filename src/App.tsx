@@ -9,6 +9,7 @@ import KioskDisplay from "./pages/KioskDisplay";
 import AdminLayout from "./components/admin/AdminLayout";
 import Dashboard from "./pages/admin/Dashboard";
 import Widgets from "./pages/admin/Widgets";
+import PageEditor from "./pages/admin/PageEditor";
 import News from "./pages/admin/News";
 import Media from "./pages/admin/Media";
 import Users from "./pages/admin/Users";
@@ -31,6 +32,7 @@ const App = () => (
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Dashboard />} />
             <Route path="widgets" element={<Widgets />} />
+            <Route path="editor" element={<PageEditor />} />
             <Route path="news" element={<News />} />
             <Route path="media" element={<Media />} />
             <Route path="users" element={<Users />} />

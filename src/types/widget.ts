@@ -7,7 +7,9 @@ export type WidgetType =
   | 'poster'
   | 'prayer-times'
   | 'slideshow'
-  | 'livestream';
+  | 'livestream'
+  | 'text'
+  | 'html';
 
 export interface WidgetPosition {
   x: number;
@@ -81,6 +83,20 @@ export interface LivestreamWidget extends WidgetBase {
   url: string;
 }
 
+export interface TextWidget extends WidgetBase {
+  type: 'text';
+  content: string; // Rich text HTML content
+  fontSize?: number;
+  textAlign?: 'right' | 'center' | 'left';
+  backgroundColor?: string;
+  textColor?: string;
+}
+
+export interface HtmlWidget extends WidgetBase {
+  type: 'html';
+  htmlContent: string;
+}
+
 export type Widget = 
   | ClockWidget
   | WeatherWidget
@@ -90,7 +106,16 @@ export type Widget =
   | PosterWidget
   | PrayerTimesWidget
   | SlideshowWidget
-  | LivestreamWidget;
+  | LivestreamWidget
+  | TextWidget
+  | HtmlWidget;
+
+export interface CanvasSettings {
+  width: number;
+  height: number;
+  gridSize: number;
+  showGrid: boolean;
+}
 
 export interface DisplayPage {
   id: string;
@@ -98,6 +123,7 @@ export interface DisplayPage {
   widgets: Widget[];
   backgroundImage?: string;
   backgroundColor?: string;
+  canvasSettings?: CanvasSettings;
   isPublished: boolean;
   createdAt: string;
   updatedAt: string;
