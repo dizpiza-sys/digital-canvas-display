@@ -19,6 +19,7 @@ interface DisplayStore {
   addWidget: (pageId: string, widget: Widget) => void;
   updateWidget: (pageId: string, widgetId: string, updates: Partial<Widget>) => void;
   removeWidget: (pageId: string, widgetId: string) => void;
+  reorderWidgets: (pageId: string, widgets: Widget[]) => void;
   
   // News actions
   addNewsItem: (item: NewsItem) => void;
@@ -159,6 +160,18 @@ export const useDisplayStore = create<DisplayStore>()(
               ...state.activePage,
               widgets: state.activePage.widgets.filter((w) => w.id !== widgetId),
             }
+          : state.activePage;
+        return { pages: newPages, activePage: newActivePage };
+      }),
+      
+      reorderWidgets: (pageId, widgets) => set((state) => {
+        const newPages = state.pages.map((p) =>
+          p.id === pageId
+            ? { ...p, widgets, updatedAt: new Date().toISOString() }
+            : p
+        );
+        const newActivePage = state.activePage?.id === pageId
+          ? { ...state.activePage, widgets }
           : state.activePage;
         return { pages: newPages, activePage: newActivePage };
       }),
